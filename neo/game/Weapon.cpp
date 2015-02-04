@@ -3145,7 +3145,7 @@ void idWeapon::Event_EjectBrass( void ) {
 	debris->Create( owner, origin, axis );
 	debris->Launch();
 
-	linear_velocity = 40 * ( playerViewAxis[0] + playerViewAxis[1] + playerViewAxis[2] );
+	linear_velocity = -40 * ( playerViewAxis[0] + playerViewAxis[1] * 4 + -playerViewAxis[2]*2 );	// +left/-right (value = force): +back/-forward : +right/-left : +down/-up
 	angular_velocity.Set( 10 * gameLocal.random.CRandomFloat(), 10 * gameLocal.random.CRandomFloat(), 10 * gameLocal.random.CRandomFloat() );
 
 	debris->GetPhysics()->SetLinearVelocity( linear_velocity );

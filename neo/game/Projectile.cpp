@@ -821,12 +821,28 @@ void idProjectile::Explode( const trace_t &collision, idEntity *ignore ) {
 
 	int surfaceType = collision.c.material != NULL ? collision.c.material->GetSurfaceType() : SURFTYPE_METAL;
 	if ( !( fxname && *fxname ) ) {
-		if ( ( surfaceType == SURFTYPE_NONE ) || ( surfaceType == SURFTYPE_METAL ) || ( surfaceType == SURFTYPE_STONE ) ) {
-			fxname = spawnArgs.GetString( "model_smokespark" );
+		if ( surfaceType == SURFTYPE_NONE ){
+			fxname = spawnArgs.GetString( "model_b_none" );
 		} else if ( surfaceType == SURFTYPE_RICOCHET ) {
-			fxname = spawnArgs.GetString( "model_ricochet" );
+			fxname = spawnArgs.GetString( "model_b_ricochet" );
+		} else if ( surfaceType == SURFTYPE_METAL ) {
+			fxname = spawnArgs.GetString( "model_b_metal" );
+		} else if ( surfaceType == SURFTYPE_STONE ) {
+			fxname = spawnArgs.GetString( "model_b_stone" );
+		} else if ( surfaceType == SURFTYPE_PLASTIC ) {
+			fxname = spawnArgs.GetString( "model_b_plastic" );
+		} else if ( surfaceType == SURFTYPE_GLASS ) {
+			fxname = spawnArgs.GetString( "model_b_glass" );
+		} else if ( surfaceType == SURFTYPE_WOOD ) {
+			fxname = spawnArgs.GetString( "model_b_wood" );
+		} else if ( surfaceType == SURFTYPE_CARDBOARD ) {
+			fxname = spawnArgs.GetString( "model_b_cardboard" );
+		} else if ( surfaceType == SURFTYPE_LIQUID ) {
+			fxname = spawnArgs.GetString( "model_b_liquid" );
+		} else if ( surfaceType == SURFTYPE_FLESH ) {
+			fxname = spawnArgs.GetString( "model_b_flesh" );
 		} else {
-			fxname = spawnArgs.GetString( "model_smoke" );
+			fxname = spawnArgs.GetString( "model_b_none" );
 		}
 	}
 

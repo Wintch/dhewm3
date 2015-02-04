@@ -34,15 +34,15 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
-#define GAME_NAME						"dhewm 3"		// appears on window titles and errors
+#define GAME_NAME						"D.R.A.P."		// appears on window titles and errors
 
-#define ENGINE_VERSION					"dhewm 1.3.1"	// printed in console
+#define ENGINE_VERSION					"drap 0.1"	// printed in console
 
 // paths
 #define	BASE_GAMEDIR					"base"
 
 // filenames
-#define CONFIG_FILE						"dhewm.cfg"
+#define CONFIG_FILE						"drap.cfg"
 
 // base folder where the source code lives
 #define SOURCE_CODE_BASE_FOLDER			"neo"
@@ -50,7 +50,7 @@ If you have questions concerning this license or the applicable additional terms
 
 // default idnet host address
 #ifndef IDNET_HOST
-	#define IDNET_HOST					"idnet.ua-corp.com"
+	#define IDNET_HOST					"localhost"
 #endif
 
 // default idnet master port

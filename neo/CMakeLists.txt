@@ -1,4 +1,4 @@
-project(dhewm3)
+project(drap)
 cmake_minimum_required(VERSION 2.6)
 
 # TODO
@@ -63,7 +63,7 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
-# precompiled libraries from the dhewm3-libs repo
+# precompiled libraries from the drap-libs repo
 if(DHEWM3LIBS)
 	if(CMAKE_CROSSCOMPILING)
 		set(CMAKE_FIND_ROOT_PATH ${DHEWM3LIBS})
@@ -261,8 +261,8 @@ if(GNUINSTALLDIRS MATCHES "NOTFOUND")
 endif()
 
 set(bindir		"${CMAKE_INSTALL_FULL_BINDIR}")
-set(libdir		"${CMAKE_INSTALL_FULL_LIBDIR}/dhewm3")
-set(datadir		"${CMAKE_INSTALL_FULL_DATADIR}/dhewm3")
+set(libdir		"${CMAKE_INSTALL_FULL_LIBDIR}/drap")
+set(datadir		"${CMAKE_INSTALL_FULL_DATADIR}/drap")
 
 configure_file(
 	"${CMAKE_SOURCE_DIR}/config.h.in"
@@ -736,17 +736,17 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT MINGW
 endif()
 
 if(CORE)
-	add_executable(dhewm3 WIN32 MACOSX_BUNDLE
+	add_executable(drap WIN32 MACOSX_BUNDLE
 		${src_core}
 		${src_sys_base}
 		${src_sys_core}
 	)
 
-	set_target_properties(dhewm3 PROPERTIES COMPILE_DEFINITIONS "__DOOM_DLL__")
-	set_target_properties(dhewm3 PROPERTIES LINK_FLAGS "${ldflags}")
-	set_target_properties(dhewm3 PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/sys/osx/Info.plist)
+	set_target_properties(drap PROPERTIES COMPILE_DEFINITIONS "__DOOM_DLL__")
+	set_target_properties(drap PROPERTIES LINK_FLAGS "${ldflags}")
+	set_target_properties(drap PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/sys/osx/Info.plist)
 
-	target_link_libraries(dhewm3
+	target_link_libraries(drap
 		idlib
 		${OPENAL_LIBRARY}
 		${OGG_LIBRARIES}
@@ -760,7 +760,7 @@ if(CORE)
 	)
 
 	if(NOT APPLE AND NOT WIN32)
-		install(TARGETS dhewm3
+		install(TARGETS drap
 				RUNTIME DESTINATION "${bindir}"
 				LIBRARY DESTINATION "${libdir}"
 				ARCHIVE DESTINATION "${libdir}"
@@ -769,16 +769,16 @@ if(CORE)
 endif()
 
 if(DEDICATED)
-	add_executable(dhewm3ded WIN32 MACOSX_BUNDLE
+	add_executable(drapded WIN32 MACOSX_BUNDLE
 		${src_core}
 		${src_stub_openal}
 		${src_stub_gl}
 		${src_sys_base}
 	)
 
-	set_target_properties(dhewm3ded PROPERTIES COMPILE_DEFINITIONS "ID_DEDICATED;__DOOM_DLL__")
-	set_target_properties(dhewm3ded PROPERTIES LINK_FLAGS "${ldflags}")
-	target_link_libraries(dhewm3ded
+	set_target_properties(drapded PROPERTIES COMPILE_DEFINITIONS "ID_DEDICATED;__DOOM_DLL__")
+	set_target_properties(drapded PROPERTIES LINK_FLAGS "${ldflags}")
+	target_link_libraries(drapded
 		idlib
 		${VORBISFILE_LIBRARIES}
 		${VORBIS_LIBRARIES}
@@ -790,7 +790,7 @@ if(DEDICATED)
 	)
 
 	if(NOT APPLE AND NOT WIN32)
-		install(TARGETS dhewm3ded
+		install(TARGETS drapded
 				RUNTIME DESTINATION "${bindir}"
 				LIBRARY DESTINATION "${libdir}"
 				ARCHIVE DESTINATION "${libdir}"
