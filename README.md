@@ -1,9 +1,11 @@
-# ABOUT
+# D.R.A.P. ABOUT
 
-D.R.A.P. code is slightly changed dhewm3. The aim is to get standalone IDTECH4 based shooter.
+This code is just slightly changed dhewm3.
+The aim is to get standalone IDTECH4 based shooter with open license
 Check for D.R.A.P. free assets here: https://github.com/Wintch/d3-base-assets
+Ready to use binary files are here: https://github.com/Wintch/drap
 
-Above the original ABOUT information:
+# Dhewm3 ABOUT:
 
 _dhewm 3_ is a _Doom 3_ GPL source modification.
 
