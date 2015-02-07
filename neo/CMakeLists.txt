@@ -26,8 +26,8 @@ include(GNUInstallDirs OPTIONAL RESULT_VARIABLE GNUINSTALLDIRS)
 
 option(CORE			"Build the core" ON)
 option(BASE			"Build the base game code" ON)
-option(D3XP			"Build the d3xp game code" ON)
-option(DEDICATED	"Build the dedicated server" OFF)
+option(D3XP			"Build the d3xp game code" OFF)
+option(DEDICATED	"Build the dedicated server" ON)
 option(ONATIVE		"Optimize for the host CPU" OFF)
 option(SDL2			"Use SDL2 instead of SDL1.2" OFF)
 
