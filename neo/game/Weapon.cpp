@@ -68,6 +68,7 @@ const idEventDef EV_Weapon_Flashlight( "flashlight", "d" );
 const idEventDef EV_Weapon_LaunchProjectiles( "launchProjectiles", "dffff" );
 const idEventDef EV_Weapon_CreateProjectile( "createProjectile", NULL, 'e' );
 const idEventDef EV_Weapon_EjectBrass( "ejectBrass" );
+const idEventDef EV_Weapon_EjectMagazine( "ejectMagazine" );
 const idEventDef EV_Weapon_Melee( "melee", NULL, 'd' );
 const idEventDef EV_Weapon_GetWorldModel( "getWorldModel", NULL, 'e' );
 const idEventDef EV_Weapon_AllowDrop( "allowDrop", "d" );
@@ -109,6 +110,7 @@ CLASS_DECLARATION( idAnimatedEntity, idWeapon )
 	EVENT( EV_Weapon_LaunchProjectiles,			idWeapon::Event_LaunchProjectiles )
 	EVENT( EV_Weapon_CreateProjectile,			idWeapon::Event_CreateProjectile )
 	EVENT( EV_Weapon_EjectBrass,				idWeapon::Event_EjectBrass )
+	EVENT( EV_Weapon_EjectMagazine,				idWeapon::Event_EjectMagazine )
 	EVENT( EV_Weapon_Melee,						idWeapon::Event_Melee )
 	EVENT( EV_Weapon_GetWorldModel,				idWeapon::Event_GetWorldModel )
 	EVENT( EV_Weapon_AllowDrop,					idWeapon::Event_AllowDrop )
@@ -150,6 +152,7 @@ idWeapon::idWeapon() {
 
 	berserk					= 2;
 	brassDelay				= 0;
+	magazineDelay				= 0;
 
 	allowDrop				= true;
 
@@ -223,6 +226,7 @@ idWeapon::CacheWeapon
 void idWeapon::CacheWeapon( const char *weaponName ) {
 	const idDeclEntityDef *weaponDef;
 	const char *brassDefName;
+	const char *magazineDefName;
 	const char *clipModelName;
 	idTraceModel trm;
 	const char *guiName;
@@ -240,6 +244,19 @@ void idWeapon::CacheWeapon( const char *weaponName ) {
 			brassDef->dict.GetString( "clipmodel", "", &clipModelName );
 			if ( !clipModelName[0] ) {
 				clipModelName = brassDef->dict.GetString( "model" );		// use the visual model
+			}
+			// load the trace model
+			collisionModelManager->TrmFromModel( clipModelName, trm );
+		}
+	}
+	// precache magazine collision model
+	magazineDefName = weaponDef->dict.GetString( "def_ejectMagazine" );
+	if ( magazineDefName[0] ) {
+		const idDeclEntityDef *magazineDef = gameLocal.FindEntityDef( magazineDefName, false );
+		if ( magazineDef ) {
+			magazineDef->dict.GetString( "clipmodel", "", &clipModelName );
+			if ( !clipModelName[0] ) {
+				clipModelName = magazineDef->dict.GetString( "model" );		// use the visual model
 			}
 			// load the trace model
 			collisionModelManager->TrmFromModel( clipModelName, trm );
@@ -296,6 +313,7 @@ void idWeapon::Save( idSaveGame *savefile ) const {
 	savefile->WriteFloat( meleeDistance );
 	savefile->WriteString( meleeDefName );
 	savefile->WriteInt( brassDelay );
+	savefile->WriteInt( magazineDelay );
 	savefile->WriteString( icon );
 
 	savefile->WriteInt( guiLightHandle );
@@ -445,10 +463,18 @@ void idWeapon::Restore( idRestoreGame *savefile ) {
 	} else {
 		brassDict.Clear();
 	}
+	
+	const idDeclEntityDef *magazineDef = gameLocal.FindEntityDef( weaponDef->dict.GetString( "def_ejectMagazine" ), false );
+	if ( magazineDef ) {
+		magazineDict = magazineDef->dict;
+	} else {
+		magazineDict.Clear();
+	}
 
 	savefile->ReadFloat( meleeDistance );
 	savefile->ReadString( meleeDefName );
 	savefile->ReadInt( brassDelay );
+	savefile->ReadInt( magazineDelay );
 	savefile->ReadString( icon );
 
 	savefile->ReadInt( guiLightHandle );
@@ -769,6 +795,7 @@ void idWeapon::GetWeaponDef( const char *objectname, int ammoinclip ) {
 	const char *guiName;
 	const char *projectileName;
 	const char *brassDefName;
+	const char *magazineDefName;
 	const char *smokeName;
 	int			ammoAvail;
 
@@ -941,7 +968,9 @@ void idWeapon::GetWeaponDef( const char *objectname, int ammoinclip ) {
 	// get the brass def
 	brassDict.Clear();
 	brassDelay = weaponDef->dict.GetInt( "ejectBrassDelay", "0" );
+	magazineDelay = weaponDef->dict.GetInt( "ejectMagazineDelay", "0" );
 	brassDefName = weaponDef->dict.GetString( "def_ejectBrass" );
+	magazineDefName = weaponDef->dict.GetString( "def_ejectMagazine" );
 
 	if ( brassDefName[0] ) {
 		const idDeclEntityDef *brassDef = gameLocal.FindEntityDef( brassDefName, false );
@@ -949,6 +978,15 @@ void idWeapon::GetWeaponDef( const char *objectname, int ammoinclip ) {
 			gameLocal.Warning( "Unknown brass '%s'", brassDefName );
 		} else {
 			brassDict = brassDef->dict;
+		}
+	}
+	
+	if ( magazineDefName[0] ) {
+		const idDeclEntityDef *magazineDef = gameLocal.FindEntityDef( magazineDefName, false );
+		if ( !magazineDef ) {
+			gameLocal.Warning( "Unknown magazine '%s'", magazineDefName );
+		} else {
+			magazineDict = magazineDef->dict;
 		}
 	}
 
@@ -2421,6 +2459,7 @@ idWeapon::Event_WeaponReloading
 */
 void idWeapon::Event_WeaponReloading( void ) {
 	status = WP_RELOAD;
+	PostEventMS( &EV_Weapon_EjectMagazine, magazineDelay );
 }
 
 /*
@@ -3144,8 +3183,55 @@ void idWeapon::Event_EjectBrass( void ) {
 	idDebris *debris = static_cast<idDebris *>(ent);
 	debris->Create( owner, origin, axis );
 	debris->Launch();
-
+	//	Left side ejected shells
+	//	linear_velocity = 40 * ( playerViewAxis[0] + playerViewAxis[1] + playerViewAxis[2] );
+	//	Right side ejected shells
 	linear_velocity = -40 * ( playerViewAxis[0] + playerViewAxis[1] * 4 + -playerViewAxis[2]*2 );	// +left/-right (value = force): +back/-forward : +right/-left : +down/-up
+	angular_velocity.Set( 10 * gameLocal.random.CRandomFloat(), 10 * gameLocal.random.CRandomFloat(), 10 * gameLocal.random.CRandomFloat() );
+
+	debris->GetPhysics()->SetLinearVelocity( linear_velocity );
+	debris->GetPhysics()->SetAngularVelocity( angular_velocity );
+}
+
+/*
+================
+idWeapon::Event_EjectMagazine
+
+Same as Event_EjectBrass, but for magazine model if present
+================
+*/
+void idWeapon::Event_EjectMagazine( void ) {
+	if ( !g_showBrass.GetBool() || !owner->CanShowWeaponViewmodel() ) {
+		return;
+	}
+
+	if ( ejectJointView == INVALID_JOINT || !magazineDict.GetNumKeyVals() ) {
+		return;
+	}
+
+	if ( gameLocal.isClient ) {
+		return;
+	}
+
+	idMat3 axis;
+	idVec3 origin, linear_velocity, angular_velocity;
+	idEntity *ent;
+
+	if ( !GetGlobalJointTransform( true, ejectJointView, origin, axis ) ) {
+		return;
+	}
+
+	gameLocal.SpawnEntityDef( magazineDict, &ent, false );
+	if ( !ent || !ent->IsType( idDebris::Type ) ) {
+		gameLocal.Error( "'%s' is not an idDebris", weaponDef ? weaponDef->dict.GetString( "def_ejectMagazine" ) : "def_ejectMagazine" );
+	}
+	idDebris *debris = static_cast<idDebris *>(ent);
+	debris->Create( owner, origin, axis );
+	debris->Launch();
+	//	Left side ejected shells
+	linear_velocity = 40 * ( playerViewAxis[0] + playerViewAxis[1] + playerViewAxis[2] );
+	//	Right side ejected shells
+	//linear_velocity = -40 * ( playerViewAxis[0] + playerViewAxis[1] * 4 + -playerViewAxis[2]*2 );	// +left/-right (value = force): +back/-forward : +right/-left : +down/-up
 	angular_velocity.Set( 10 * gameLocal.random.CRandomFloat(), 10 * gameLocal.random.CRandomFloat(), 10 * gameLocal.random.CRandomFloat() );
 
 	debris->GetPhysics()->SetLinearVelocity( linear_velocity );
