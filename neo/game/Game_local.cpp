@@ -2425,10 +2425,13 @@ void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
 		fov_y = atan2( ratio_y, x ) * 360.0f / idMath::PI;
 	}
 
-	// FIXME: somehow, this is happening occasionally
-	assert( ( fov_x > 0 ) && ( fov_y > 0 ) );
+	// FIXME: fov_y value is 0 in dedicated mode
+	// Will result in: "Sys_Error: idGameLocal::CalcFov: bad result : x 90.000000 0.000000"
+	// Later when you devide by 0...
+	//assert( ( fov_x > 0 ) && ( fov_y > 0 ) );
 	if ( ( fov_y <= 0 ) || ( fov_x <= 0 ) ) {
-		Error( "idGameLocal::CalcFov: bad result" );
+		fov_y = 90;
+		//Error( "idGameLocal::CalcFov: bad result : x %f %f",fov_x,fov_y );
 	}
 }
 
