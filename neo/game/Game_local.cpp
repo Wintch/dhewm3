@@ -2395,7 +2395,7 @@ void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
 	case -1 :
 		// auto mode => use aspect ratio from resolution, assuming screen's pixels are squares
 		ratio_x = renderSystem->GetScreenWidth();
-		ratio_y = renderSystem->GetScreenHeight();
+		ratio_y = renderSystem->GetScreenHeight(); //FIXME: not getting the value when dedicated server. Don't use r_aspectratio=-1
 		break;
 	case 0 :
 		// 4:3
@@ -2423,6 +2423,7 @@ void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
 		fov_x = base_fov;
 		x = ratio_x / tan( fov_x / 360.0f * idMath::PI );
 		fov_y = atan2( ratio_y, x ) * 360.0f / idMath::PI;
+		Warning( "idGameLocal::CalcFov: ratio_y : %f", ratio_y );
 	}
 
 	// FIXME: fov_y value is 0 in dedicated mode
@@ -2430,8 +2431,8 @@ void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
 	// Later when you devide by 0...
 	//assert( ( fov_x > 0 ) && ( fov_y > 0 ) );
 	if ( ( fov_y <= 0 ) || ( fov_x <= 0 ) ) {
+		Warning( "idGameLocal::CalcFov: bad result : x %f %f",fov_x,fov_y );
 		fov_y = 90;
-		//Error( "idGameLocal::CalcFov: bad result : x %f %f",fov_x,fov_y );
 	}
 }
 
