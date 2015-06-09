@@ -461,9 +461,13 @@ typedef struct vidmode_s {
 vidmode_t r_vidModes[] = {
 	// Trend in screen resolution
 	{ "Mode  0: 1024x768", 1024, 768 },
-	{ "Mode  1: 1280x1024", 1280, 1024 },
-	{ "Mode  2: 1366x768", 1366, 768 },
-	{ "Mode  3: 1920x1080", 1920, 1080 },
+	{ "Mode  1: 1280x800", 1280, 800 },
+	{ "Mode  2: 1280x1024", 1280, 1024 },
+	{ "Mode  3: 1366x768", 1366, 768 },
+	{ "Mode  4: 1920x1080", 1920, 1080 },
+	{ "Mode  5: 2560x1600", 2560, 1600 },
+	{ "Mode  6: 2880x1800", 2880, 1800 },
+	{ "Mode  7: 3840x2160", 3840, 2160 },
 };
 static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
 
