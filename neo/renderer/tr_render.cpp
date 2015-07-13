@@ -839,6 +839,27 @@ void RB_CreateSingleDrawInteractions( const drawSurf_t *surf, void (*DrawInterac
 }
 
 /*
+========================
+GL_Clear
+========================
+*/
+void GL_Clear( bool color, bool depth, bool stencil, byte stencilValue, float r, float g, float b, float a ) {
+        int clearFlags = 0;
+        if ( color ) {
+                qglClearColor( r, g, b, a );
+                clearFlags |= GL_COLOR_BUFFER_BIT;
+        }
+        if ( depth ) {
+                clearFlags |= GL_DEPTH_BUFFER_BIT;
+        }
+        if ( stencil ) {
+                qglClearStencil( stencilValue );
+                clearFlags |= GL_STENCIL_BUFFER_BIT;
+        }
+        qglClear( clearFlags );
+}
+
+/*
 =============
 RB_DrawView
 =============

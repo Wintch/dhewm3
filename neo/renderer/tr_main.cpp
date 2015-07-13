@@ -1094,6 +1094,13 @@ a mirror / remote location, or a 3D view on a gui surface.
 Parms will typically be allocated with R_FrameAlloc
 ================
 */
+
+#ifdef ENABLE_OCULUS_HMD
+//void OR_SetViewMatrix(tr.viewDef);
+void OR_SetupViewFrustum(idRenderSystemLocal &tr);
+void OR_SetupProjection(idRenderSystemLocal &tr);
+#endif
+
 void R_RenderView( viewDef_t *parms ) {
 	viewDef_t		*oldView;
 
@@ -1115,11 +1122,37 @@ void R_RenderView( viewDef_t *parms ) {
 
 	// the four sides of the view frustum are needed
 	// for culling and portal visibility
-	R_SetupViewFrustum();
+
+#ifdef ENABLE_OCULUS_HMD
+        if (vr_enableOculusRiftRendering.GetBool())
+        {
+                //R_SetupViewFrustum();
+                OR_SetupViewFrustum(tr);
+        }
+        else
+        {
+                R_SetupViewFrustum();
+        }
+#else
+        R_SetupViewFrustum();
+#endif
 
 	// we need to set the projection matrix before doing
 	// portal-to-screen scissor box calculations
-	R_SetupProjection();
+
+#ifdef ENABLE_OCULUS_HMD
+        if (vr_enableOculusRiftRendering.GetBool())
+        {
+                //R_SetupProjection();
+                OR_SetupProjection(tr);
+        }
+        else
+        {
+                R_SetupProjection();
+        }
+#else
+        R_SetupProjection();
+#endif
 
 	// identify all the visible portalAreas, and the entityDefs and
 	// lightDefs that are in them and pass culling.

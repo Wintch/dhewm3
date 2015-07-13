@@ -474,6 +474,18 @@ static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
 static bool R_GetModeInfo( int *width, int *height, int mode ) {
 	vidmode_t	*vm;
 
+        // OCULUS BEGIN
+// Overwrite Resolution with HMD supported resolution
+#ifdef ENABLE_OCULUS_HMD
+        if (vr_enableOculusRiftRendering.GetBool())
+        {
+                *width = oculus->GetRenderWidth();
+                *height = oculus->GetRenderHeight();
+                return true;
+        }
+#endif
+        // OCULUS END
+
 	if ( mode < -1 ) {
 		return false;
 	}
@@ -2138,13 +2150,16 @@ bool idRenderSystemLocal::IsFullScreen( void ) const {
 	return glConfig.isFullscreen;
 }
 
+// OCULUS BEGIN
 /*
 ========================
 idRenderSystemLocal::GetScreenWidth
 ========================
 */
 int idRenderSystemLocal::GetScreenWidth( void ) const {
-	return glConfig.vidWidth;
+        if (vr_enableOculusRiftRendering.GetBool())
+                return oculus->GetRenderWidth();
+        return glConfig.vidWidth;
 }
 
 /*
@@ -2153,5 +2168,8 @@ idRenderSystemLocal::GetScreenHeight
 ========================
 */
 int idRenderSystemLocal::GetScreenHeight( void ) const {
-	return glConfig.vidHeight;
+        if (vr_enableOculusRiftRendering.GetBool())
+                return oculus->GetRenderHeight();
+        return glConfig.vidHeight;
 }
+// OCULUS END

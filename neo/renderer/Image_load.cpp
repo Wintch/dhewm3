@@ -1818,6 +1818,8 @@ void idImage::BindFragment() {
 CopyFramebuffer
 ====================
 */
+extern void SaveImage(const char *filename, GLuint image, int width, int height);
+
 void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bool useOversizedBuffer ) {
 	Bind();
 
@@ -1835,7 +1837,29 @@ void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bo
 	GetDownsize( imageWidth, imageHeight );
 	GetDownsize( potWidth, potHeight );
 
-	qglReadBuffer( GL_BACK );
+	if (vr_enableOculusRiftRendering.GetBool()) {
+                GLuint fbo;
+                oculus->SelectBuffer(oculus->GetCurrentFrambufferIndex(), fbo);
+                glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+                if (strcmp(this->imgName, "_scratch") == 0)
+                {
+                        uploadWidth = potWidth;
+                        uploadHeight = potHeight;
+
+                        qglCopyTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
+                        qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+                        qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+                        qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+                        qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+
+                        backEnd.c_copyFrameBuffer++;
+                        return;
+                }
+        } else {
+                qglReadBuffer(GL_BACK);
+        }
 
 	// only resize if the current dimensions can't hold it at all,
 	// otherwise subview renderings could thrash this

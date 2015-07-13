@@ -675,7 +675,26 @@ Rendering a scene may require multiple views to be rendered
 to handle mirrors,
 ====================
 */
+
+// OCULUS BEGIN
+extern void Fn_OculusRenderScene(const renderView_t *renderView, idRenderWorldLocal * renderWorld, int eye);
+// OCULUS END
+
 void idRenderWorldLocal::RenderScene( const renderView_t *renderView ) {
+        // OCULUS BEGIN
+#ifdef ENABLE_OCULUS_HMD
+        if (vr_enableOculusRiftRendering.GetBool())
+        {
+                const renderView_t *left = renderView;
+                const renderView_t *right = renderView;
+
+                Fn_OculusRenderScene(left, this, 0);
+                Fn_OculusRenderScene(right, this, 1);
+
+                return;
+        }
+#endif
+        // OCULUS END
 #ifndef	ID_DEDICATED
 	renderView_t	copy;
 

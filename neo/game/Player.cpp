@@ -963,6 +963,10 @@ idPlayer::idPlayer() {
 	viewAngles				= ang_zero;
 	cmdAngles				= ang_zero;
 
+        // OCULUS BEGIN
+        aimAngles                               = ang_zero;
+        // OCULUS END
+
 	oldButtons				= 0;
 	buttonMask				= 0;
 	oldFlags				= 0;
@@ -970,6 +974,16 @@ idPlayer::idPlayer() {
 	lastHitTime				= 0;
 	lastSndHitTime			= 0;
 	lastSavingThrowTime		= 0;
+	
+        // OCULUS
+        // Add lasersight based on Doom3 BFG
+        laserSightHandle = -1;
+        memset(&laserSightRenderEntity, 0, sizeof(laserSightRenderEntity));
+
+        // Add aiming pointer
+        aimPointerHandle = -1;
+        memset(&aimPointerRenderEntity, 0, sizeof(aimPointerRenderEntity));
+        // OCULUS END
 
 	weapon					= NULL;
 
@@ -1409,6 +1423,34 @@ void idPlayer::Init( void ) {
 	}
 
 	cvarSystem->SetCVarBool( "ui_chat", false );
+
+	// OCULUS BEGIN
+        // Add lasersight based on Doom3 BFG. Decided to change the look of it and use a BFG beam.
+        const char *skin = "skins/duffybolt";
+        memset(&laserSightRenderEntity, 0, sizeof(laserSightRenderEntity));
+        laserSightRenderEntity.hModel = renderModelManager->FindModel("_beam");
+        laserSightRenderEntity.bounds = laserSightRenderEntity.hModel->Bounds(&laserSightRenderEntity);
+        laserSightRenderEntity.shaderParms[SHADERPARM_RED] = 1.0f;
+        laserSightRenderEntity.shaderParms[SHADERPARM_GREEN] = 1.0f;
+        laserSightRenderEntity.shaderParms[SHADERPARM_BLUE] = 1.0f;
+        laserSightRenderEntity.shaderParms[SHADERPARM_ALPHA] = 1.0f;
+        laserSightRenderEntity.customSkin = declManager->FindSkin(skin);
+        laserSightRenderEntity.noSelfShadow = true;
+        laserSightRenderEntity.noShadow = true;
+
+        memset(&aimPointerRenderEntity, 0, sizeof(aimPointerRenderEntity));
+        aimPointerRenderEntity.hModel = renderModelManager->FindModel("_sprite");
+        //aimPointerRenderEntity.hModel = renderModelManager->FindModel("models/particles/plasma_bolt/plasma_bolt.lwo");
+
+        aimPointerRenderEntity.bounds = aimPointerRenderEntity.hModel->Bounds(&aimPointerRenderEntity);
+        aimPointerRenderEntity.shaderParms[SHADERPARM_RED] = 1.0f;
+        aimPointerRenderEntity.shaderParms[SHADERPARM_GREEN] = 1.0f;
+        aimPointerRenderEntity.shaderParms[SHADERPARM_BLUE] = 1.0f;
+        aimPointerRenderEntity.shaderParms[SHADERPARM_ALPHA] = 1.0f;
+        aimPointerRenderEntity.customSkin = declManager->FindSkin(skin);
+        aimPointerRenderEntity.noSelfShadow = true;
+        aimPointerRenderEntity.noShadow = true;
+        // OCULUS END
 }
 
 /*
@@ -2049,6 +2091,32 @@ void idPlayer::Restore( idRestoreGame *savefile ) {
 	savefile->ReadBool( leader );
 	savefile->ReadInt( lastSpectateChange );
 	savefile->ReadInt( lastTeleFX );
+	
+        // OCULUS BEGIN
+        // Add lasersight based on Doom3 BFG. Decided to change the look of it and use a BFG beam.
+        const char *skin = "skins/duffybolt";
+        memset(&laserSightRenderEntity, 0, sizeof(laserSightRenderEntity));
+        laserSightRenderEntity.hModel = renderModelManager->FindModel("_beam");
+        laserSightRenderEntity.bounds = laserSightRenderEntity.hModel->Bounds(&laserSightRenderEntity);
+        laserSightRenderEntity.shaderParms[SHADERPARM_RED] = 1.0f;
+        laserSightRenderEntity.shaderParms[SHADERPARM_GREEN] = 1.0f;
+        laserSightRenderEntity.shaderParms[SHADERPARM_BLUE] = 1.0f;
+        laserSightRenderEntity.shaderParms[SHADERPARM_ALPHA] = 1.0f;
+        laserSightRenderEntity.customSkin = declManager->FindSkin(skin);
+        laserSightRenderEntity.noSelfShadow = true;
+        laserSightRenderEntity.noShadow = true;
+
+        memset(&aimPointerRenderEntity, 0, sizeof(aimPointerRenderEntity));
+        aimPointerRenderEntity.hModel = renderModelManager->FindModel("_sprite");
+        aimPointerRenderEntity.bounds = laserSightRenderEntity.hModel->Bounds(&aimPointerRenderEntity);
+        aimPointerRenderEntity.shaderParms[SHADERPARM_RED] = 1.0f;
+        aimPointerRenderEntity.shaderParms[SHADERPARM_GREEN] = 1.0f;
+        aimPointerRenderEntity.shaderParms[SHADERPARM_BLUE] = 1.0f;
+        aimPointerRenderEntity.shaderParms[SHADERPARM_ALPHA] = 1.0f;
+        aimPointerRenderEntity.customSkin = declManager->FindSkin(skin);
+        aimPointerRenderEntity.noSelfShadow = true;
+        aimPointerRenderEntity.noShadow = true;
+        // OCULUS END
 
 	// set the pm_ cvars
 	const idKeyValue	*kv;
@@ -2220,8 +2288,19 @@ void idPlayer::SpawnToPoint( const idVec3 &spawn_origin, const idAngles &spawn_a
 	// if this is the first spawn of the map, we don't have a usercmd yet,
 	// so the delta angles won't be correct.  This will be fixed on the first think.
 	viewAngles = ang_zero;
+
+        // OCULUS BEGIN
+        aimAngles = ang_zero;
+        // OCULUS END
+
 	SetDeltaViewAngles( ang_zero );
 	SetViewAngles( spawn_angles );
+
+        // OCULUS BEGIN
+        SetDeltaAimAngles(ang_zero);
+        VR_SetAimAngles(spawn_angles);
+        // OCULUS END
+
 	spawnAngles = spawn_angles;
 	spawnAnglesSet = false;
 
@@ -2628,7 +2707,12 @@ void idPlayer::DrawHUD( idUserInterface *_hud ) {
 	// weapon targeting crosshair
 	if ( !GuiActive() ) {
 		if ( cursor && weapon.GetEntity()->ShowCrosshair() ) {
-			cursor->Redraw( gameLocal.realClientTime );
+			// OCULUS BEGIN
+                        // Don't want a crosshair if we are in VR
+                        if (!oculus->isActivated) {
+                                cursor->Redraw(gameLocal.realClientTime);
+                        }
+                        // OCULUS END
 		}
 	}
 }
@@ -2742,6 +2826,13 @@ Called when a weapon fires, generates head twitches, etc
 ==================
 */
 void idPlayer::WeaponFireFeedback( const idDict *weaponDef ) {
+
+        // OCULUS BEGIN
+        // Disable recoil. Make this an option?
+        if (oculus->isActivated)
+                return;
+        // OCULUS END
+
 	// force a blink
 	blink_time = 0;
 
@@ -4848,7 +4939,16 @@ idPlayer::SetViewAngles
 ================
 */
 void idPlayer::SetViewAngles( const idAngles &angles ) {
-	UpdateDeltaViewAngles( angles );
+        // OCULUS BEGIN
+        if (oculus->isActivated)
+        {
+                VR_UpdateDeltaViewAngles(angles);
+        }
+        else
+        {
+                UpdateDeltaViewAngles(angles);
+        }
+        // OCULUS END
 	viewAngles = angles;
 }
 
@@ -6034,7 +6134,14 @@ void idPlayer::Move( void ) {
 		}
 	}
 
-	BobCycle( pushVelocity );
+	// OCULUS BEGIN
+        if (!oculus->isActivated)
+        {
+                // NONO in VR
+                BobCycle(pushVelocity);
+        }
+        // OCULUS END
+
 	CrashLand( oldOrigin, oldVelocity );
 }
 
@@ -6374,8 +6481,16 @@ void idPlayer::Think( void ) {
 		Present();
 
 		UpdateDamageEffects();
-
+		
 		LinkCombat();
+
+		// OCULUS BEGIN
+                if (oculus->isActivated)
+                {
+                        UpdateAimPointer();
+                        //UpdateLaserSight();
+                }
+                // OCULUS END
 
 		playerView.CalculateShake();
 	}
@@ -6881,6 +6996,10 @@ void idPlayer::Teleport( const idVec3 &origin, const idAngles &angles, idEntity 
 
 	SetViewAngles( angles );
 
+        // OCULUS BEGIN
+        // VR_SetAimAngles(angles);
+        // OCULUS END
+
 	legsYaw = 0.0f;
 	idealLegsYaw = 0.0f;
 	oldViewYaw = viewAngles.yaw;
@@ -7085,7 +7204,15 @@ void idPlayer::CalculateViewWeaponPos( idVec3 &origin, idMat3 &axis ) {
 
 	// CalculateRenderView must have been called first
 	const idVec3 &viewOrigin = firstPersonViewOrigin;
-	const idMat3 &viewAxis = firstPersonViewAxis;
+	//const idMat3 &viewAxis = firstPersonViewAxis;
+
+	// OCULUS BEGIN
+        if (oculus->isActivated)
+        {
+                const idMat3 &viewAxis = aimAngles.ToMat3();
+        }
+
+        // OCULUS END
 
 	// these cvars are just for hand tweaking before moving a value to the weapon def
 	idVec3	gunpos( g_gun_x.GetFloat(), g_gun_y.GetFloat(), g_gun_z.GetFloat() );
@@ -7220,6 +7347,14 @@ idVec3 idPlayer::GetEyePosition( void ) const {
 	} else {
 		org = GetPhysics()->GetOrigin();
 	}
+
+        // OCULUS BEGIN
+        if (oculus->isActivated && oculus->isMotionTrackingEnabled() && !oculus->isDebughmd)
+        {
+                org += oculus->GetHeadTrackingPosition();
+        }
+        // OCULUS END
+
 	return org + ( GetPhysics()->GetGravityNormal() * -eyeOffset.z );
 }
 
